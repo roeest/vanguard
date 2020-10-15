@@ -67,8 +67,12 @@ func (r rawHoldings) toHoldings() ([]Holding, error) {
 		err    error
 	)
 	for _, h := range r.Holdings {
-		var resultHolding = Holding{Symbol: h.Symbol}
+		var resultHolding = Holding{Symbol: h.Symbol, LongName: h.LongName}
 		resultHolding.Shares, err = strconv.Atoi(h.SharesHeld)
+		if err != nil {
+			return nil, err
+		}
+		resultHolding.MarketValue, err = strconv.Atoi(h.MarketValue)
 		if err != nil {
 			return nil, err
 		}
@@ -82,9 +86,11 @@ func (r rawHoldings) toHoldings() ([]Holding, error) {
 }
 
 type rawHolding struct {
-	AsOf       string `json:"asOfDate"`
-	SharesHeld string `json:"sharesHeld"`
-	Symbol     string `json:"ticker"`
+	AsOf        string `json:"asOfDate"`
+	SharesHeld  string `json:"sharesHeld"`
+	Symbol      string `json:"ticker"`
+	MarketValue string `json:"marketValue"`
+	LongName    string `json:"longName"`
 }
 
 type rawFunds struct {
@@ -93,9 +99,11 @@ type rawFunds struct {
 }
 
 type Holding struct {
-	AsOf   time.Time
-	Shares int
-	Symbol string
+	AsOf        time.Time
+	Shares      int
+	MarketValue int
+	Symbol      string
+	LongName    string
 }
 
 func parseTime(val string) (time.Time, error) {
