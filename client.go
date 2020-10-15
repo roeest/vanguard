@@ -17,10 +17,21 @@ type client struct {
 	*http.Client
 	format string
 	header http.Header
+	debug  bool
 }
 
-func NewClient() *client {
-	return &client{Client: http.DefaultClient, format: "json", header: make(http.Header, 1)}
+type Option func(c *client)
+
+func DebugOption(c *client) {
+	c.debug = true
+}
+
+func NewClient(opts ...Option) *client {
+	c := &client{Client: http.DefaultClient, format: "json", header: make(http.Header, 1)}
+	for _, o := range opts {
+		o(c)
+	}
+	return c
 }
 
 func (c *client) GetEtf(symbol string) (*Etf, error) {
@@ -61,6 +72,9 @@ func (c *client) getResourceWithQueryParams(symbol, resource string, result inte
 	respData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
+	}
+	if c.debug {
+		fmt.Println(string(respData))
 	}
 
 	if resp.StatusCode != http.StatusOK {
