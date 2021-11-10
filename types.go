@@ -110,3 +110,64 @@ func parseTime(val string) (time.Time, error) {
 	t, err := time.Parse(timeFormat, val)
 	return t.UTC(), err
 }
+
+type rawSectorInfo struct {
+	Name                  string `json:"name"`
+	BenchmarkPercentage   string `json:"bnkCurrYrPct"`
+	CurrentYearPercentage string `json:"currYrPct"`
+}
+
+type rawDiversification struct {
+	CurrentAsOfDate   string           `json:"currentAsOfDate"`
+	BenchmarkAsOfDate string           `json:"benchmarkAsOfDate"`
+	Sectors           []sectorInfoItem `json:"long"`
+}
+
+type sectorInfoItem struct {
+	SectorInfo []rawSectorInfo `json:"item"`
+}
+
+func (r rawDiversification) toDiversificationInfo() (DiversificationInfo, error) {
+	result := DiversificationInfo{
+		Sectors: make(map[string]SectorPercentage, len(r.Sectors[0].SectorInfo)),
+	}
+	var err error
+	result.BenchmarkTimestamp, err = parseTime(r.BenchmarkAsOfDate)
+	if err != nil {
+		return DiversificationInfo{}, err
+	}
+	result.CurrentPercentageTimestamp, err = parseTime(r.CurrentAsOfDate)
+	if err != nil {
+		return DiversificationInfo{}, err
+	}
+
+	for _, s := range r.Sectors[0].SectorInfo {
+		sectorInfo := SectorPercentage{}
+		f, err := strconv.ParseFloat(s.CurrentYearPercentage, 64)
+		if err != nil {
+			return DiversificationInfo{}, err
+		}
+		sectorInfo.CurrentWeight = f * 0.01
+
+		if s.BenchmarkPercentage != "" {
+			f, err = strconv.ParseFloat(s.BenchmarkPercentage, 64)
+			if err != nil {
+				return DiversificationInfo{}, err
+			}
+			sectorInfo.BenchmarkWeight = f * 0.01
+		}
+		result.Sectors[s.Name] = sectorInfo
+	}
+	return result, nil
+}
+
+type DiversificationInfo struct {
+	Sectors                    map[string]SectorPercentage
+	BenchmarkTimestamp         time.Time
+	CurrentPercentageTimestamp time.Time
+}
+
+type SectorPercentage struct {
+	BenchmarkWeight float64
+	CurrentWeight   float64
+}

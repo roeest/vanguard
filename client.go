@@ -35,7 +35,7 @@ func NewClient(opts ...Option) *client {
 }
 
 func (c *client) GetEtf(symbol string) (*Etf, error) {
-	c.header.Set("Referer", fmt.Sprintf(refererTemplate, symbol))
+	c.header.Set("Referer", "https://api.vanguard.com")
 	etf, err := newEtf(c, symbol)
 	if err != nil {
 		return nil, err
