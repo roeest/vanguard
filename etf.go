@@ -6,6 +6,7 @@ import (
 
 const (
 	profileResource            = "profile"
+	diversificationResource    = "diversification"
 	allEtfHoldingQueryTemplate = "start=%d&count=%d"
 )
 
@@ -63,3 +64,18 @@ func (e *Etf) GetProfile() (Profile, error) {
 	}
 	return p.FundProfile.toProfile()
 }
+
+// type
+
+func (e *Etf) GetDiversificationInfo() (DiversificationInfo, error) {
+	var p struct {
+		Sector rawDiversification `json:"sector"`
+	}
+	err := e.c.getResource(e.Symbol, diversificationResource, &p)
+	if err != nil {
+		return DiversificationInfo{}, err
+	}
+	return p.Sector.toDiversificationInfo()
+}
+
+// https://api.vanguard.com/rs/ire/01/ind/fund/0968/diversification.json
